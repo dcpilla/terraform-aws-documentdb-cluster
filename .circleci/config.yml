@@ -1,0 +1,39 @@
+# This config was automatically generated from your source code
+# Stacks detected: cicd:github-actions:.github/workflows,deps:go:test/src
+version: 2.1
+jobs:
+  plan-apply:
+    # Install go modules and run tests
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    working_directory: ~/project/test/src
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: terraform init & plan
+          command: |
+            terraform init -input=false
+            terraform plan -out tfapply -var-file terraform.tfvars
+
+  apply:
+    # This is an example deploy job, not actually used by the workflow
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      # Replace this with steps to deploy to users
+      - run:
+          name: apply
+          command: terraform apply -auto-approve tfapply
+
+workflows:
+  plan_approve_apply:
+    jobs:
+      - plan-apply
+      - hold-apply:
+          type: approval
+          requires:
+            - plan-apply
+      - apply:
+          requires:
+            - hold-apply
